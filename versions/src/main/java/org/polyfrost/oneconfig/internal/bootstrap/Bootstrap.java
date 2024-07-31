@@ -24,37 +24,12 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.hud.v1
+package org.polyfrost.oneconfig.internal.bootstrap;
 
-import org.polyfrost.oneconfig.api.config.v1.annotations.Text
-import org.polyfrost.polyui.component.impl.Image
-import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.utils.resourceExists
-
-class ImageHud(@Text(title = "Image Path") val address: String) : Hud<Image>() {
-    override fun id() = "image_hud.toml"
-
-    override fun title() = "Image Hud"
-
-    override fun category() = Category.INFO
-
-    override fun create() = Image(address)
-
-    override fun update() = true
-
-    override fun initialize() {
-        if (isReal) {
-            addCallback<String>("address") {
-                if (!resourceExists(it)) return@addCallback false
-                return@addCallback try {
-                    get().image = PolyImage(it)
-                    false
-                } catch (e: Exception) {
-                    true
-                }
-            }
-        }
+public class Bootstrap {
+    public static void init() {
+        //#if FORGE && MODERN==0
+        new org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker().injectIntoClassLoader(net.minecraft.launchwrapper.Launch.classLoader);
+        //#endif
     }
-
-    override fun updateFrequency() = -1L
 }

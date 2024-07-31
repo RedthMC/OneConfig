@@ -29,7 +29,9 @@ package org.polyfrost.oneconfig.api.config.v1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -37,6 +39,9 @@ import java.util.function.Predicate;
 
 public abstract class Config {
     protected Tree tree;
+
+    @Include
+    public boolean enabled = true;
 
     public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
         // written this way so that trees can be lateinit
@@ -123,6 +128,18 @@ public abstract class Config {
         tree.overwrite(in);
     }
 
+    protected void loadFrom(Path p) {
+        if (tree == null) throw notInitialized();
+        Tree in;
+        try {
+            in = ConfigManager.active().getNoRegister(p);
+        } catch (Exception e) {
+            return;
+        }
+        if (in == null) return;
+        tree.overwrite(in);
+    }
+
 
     protected Property<?> getProperty(String option) {
         if (tree == null) throw notInitialized();
@@ -151,11 +168,42 @@ public abstract class Config {
         // <clinit>
     }
 
+    /**
+     * A category for the config, used for sorting in the UI.
+     * <br>
+     * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
+     * </br>
+     */
+    public static final class Category {
+        public static final Category COMBAT = new Category("Combat", 1);
+        public static final Category QOL = new Category("Quality of Life", 2);
+        public static final Category HYPIXEL = new Category("Hypixel", 3);
+        public static final Category OTHER = new Category("Other", 4);
 
-    public enum Category {
-        COMBAT,
-        QOL,
-        HYPIXEL,
-        OTHER
+        private final String name;
+        private final int id;
+
+        private Category(String name, int id) {
+            this.name = name;
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public int hashCode() {
+            return id;
+        }
     }
 }
